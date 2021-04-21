@@ -6,8 +6,11 @@ namespace personal.blackjack
 {
     class Deck
     {
-        public Deck()
+        public Deck(int num = 1)
         {
+            NumDecks = num;
+            NumCards = 52* NumDecks;
+
             Init();
         }
 
@@ -16,22 +19,22 @@ namespace personal.blackjack
             Init();
 
             int x;
-            Card[] temp = new Card[52];
+            Card[] temp = new Card[NumCards];
 
-            bool[] used = new bool[52];
-            for (x = 0; x < 52; x++) used[x]= false;
-            
+            bool[] used = new bool[NumCards];
+            for (x = 0; x < NumCards; x++) used[x] = false;
+
             x = 0;
             while (cards.Count > 0)
             {
                 temp[x++] = cards.Pop();
             }
 
-            x = 0; 
-            Random rand = new Random((int)DateTime.Now.Ticks);
-            while (x<52)
+            x = 0;
+            Random rand = new Random(); // (int)DateTime.Now.Ticks);
+            while (x < NumCards)
             {
-                int randIndex = rand.Next(52);
+                int randIndex = rand.Next(NumCards);
                 if (used[randIndex] == false)
                 {
                     cards.Push(temp[randIndex]);
@@ -42,7 +45,20 @@ namespace personal.blackjack
 
         }
 
-        public void Print(bool bLong = true)
+        public Card getCard()
+        {
+            Card c = cards.Pop();
+            Count += c.CountValue();
+
+            return c;
+        }
+
+        public int getRemainingCards()
+        {
+            return cards.Count;
+        }
+
+        public void Print(bool bLong = false)
         {
             foreach (Card c in cards)
             {
@@ -59,20 +75,32 @@ namespace personal.blackjack
             Console.WriteLine();
         }
 
+        public int Count { get; set; }
+
+
+
+
         protected void Init()
         {
             cards.Clear();
-            for (int x = (int)SuitType.Hearts; x <= (int)SuitType.Spades; x++)
+            for (int d = 0; d < NumDecks; d++)
             {
-                for (int y = (int)CardType.Two; y <= (int)CardType.Ace; y++)
+                for (int x = (int)SuitType.Hearts; x <= (int)SuitType.Spades; x++)
                 {
-                    SuitType s = (SuitType)x;
-                    CardType c = (CardType)y;
-                    cards.Push(new Card(s, c));
+                    for (int y = (int)CardType.Two; y <= (int)CardType.Ace; y++)
+                    {
+                        SuitType s = (SuitType)x;
+                        CardType c = (CardType)y;
+                        cards.Push(new Card(s, c));
+                    }
                 }
             }
+            Count = 0;
         }
 
-        protected Stack<Card> cards= new Stack<Card>();
+        protected Stack<Card> cards = new Stack<Card>();
+        protected int NumDecks { get; set; }
+        protected int NumCards { get; set; }
+        
     }
 }

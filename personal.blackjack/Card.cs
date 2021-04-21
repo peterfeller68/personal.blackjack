@@ -47,6 +47,26 @@ namespace personal.blackjack
             throw new Exception("Unknown Card");
         }
 
+        public int CountValue()
+        {
+            switch (type)
+            {
+                case CardType.Ten:
+                case CardType.Jack:
+                case CardType.Queen:
+                case CardType.King:
+                case CardType.Ace:
+                    return -1;
+                case CardType.Two:
+                case CardType.Three:
+                case CardType.Four:
+                case CardType.Five:
+                case CardType.Six:
+                    return 1;
+            }
+            return 0;
+        }
+
         public override string ToString()
         {
             string suitStr = "Unk";
