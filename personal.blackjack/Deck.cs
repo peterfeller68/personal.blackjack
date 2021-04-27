@@ -58,6 +58,26 @@ namespace personal.blackjack
             return cards.Count;
         }
 
+        public int getNumHighCards()
+        {
+            int retVal = 0;
+            foreach (Card c in cards)
+            {
+                if (c.CountValue() == -1) retVal++;
+            }
+            return retVal;
+        }
+
+        public int getNumLowCards()
+        {
+            int retVal = 0;
+            foreach (Card c in cards)
+            {
+                if (c.CountValue() == 1) retVal++;
+            }
+            return retVal;
+        }
+
         public void Print(bool bLong = false)
         {
             foreach (Card c in cards)
@@ -73,6 +93,14 @@ namespace personal.blackjack
             }
             Console.WriteLine();
             Console.WriteLine();
+        }
+
+        public void PrintCountStats()
+        {
+            Console.WriteLine("Deck Count: {0}", Count);
+            Console.WriteLine("Rem Cards: {0}", getRemainingCards());
+            Console.WriteLine("Num High Cards: {0}", getNumHighCards());
+            Console.WriteLine("Num Low Cards: {0}", getNumLowCards());
         }
 
         public int Count { get; set; }

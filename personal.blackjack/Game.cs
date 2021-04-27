@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace personal.blackjack
@@ -8,21 +9,17 @@ namespace personal.blackjack
     class Game
     {
 
-        public Game (int NumPlayers, int NumDecks, int dbgLvl =0)
+        public Game (Strategy s)
         {
-            deck = new Deck(NumDecks);
-            dealer = new Dealer(deck, dbgLvl);
+            Player.PlayerNum = 0;
+            strat = s;
+            deck = new Deck(strat.NumDecks);
+            dealer = new Dealer(strat, deck);
 
             players = new ArrayList();
-            for (int x = 0; x < NumPlayers; x++)
+            for (int x = 0; x < strat.NumPlayers; x++)
             {
-                players.Add(new Player(dealer, dbgLvl));
-            }
-
-            DebugLevel = dbgLvl;
-            for (int x=0; x<1000; x++)
-            {
-                CountStats[x] = 0;
+                players.Add(new Player(strat, dealer));
             }
         }
 
@@ -41,22 +38,16 @@ namespace personal.blackjack
                 for (int x = 0; x < players.Count; x++)
                 {
                     Player player = (Player)players[x];
-                    player.DealCard(deck.getCard());
+                    // the original deal is always to hand1
+                    player.DealCard(deck.getCard(), player.hand1);
                 }
-                dealer.DealCard(deck.getCard());
+                Card c = deck.getCard();
+                dealer.DealCard(c);
+                if (n==1)
+                {
+                    dealer.VisibleCard = c;
+                }
             }
-        }
-
-        protected void SetDebugLevel(int dbgLevel)
-        {
-            DebugLevel = dbgLevel; 
-            
-            for (int x = 0; x < players.Count; x++)
-            {
-                Player player = (Player)players[x];
-                player.DebugLevel = dbgLevel;
-            }
-            dealer.DebugLevel =dbgLevel;
         }
 
         protected void Play()
@@ -77,7 +68,7 @@ namespace personal.blackjack
                 player.Evaluate();
             }
 
-            if (DebugLevel == 2)
+            if (strat.DebugLevel == 2)
             {
                 Console.WriteLine();
             }
@@ -92,25 +83,85 @@ namespace personal.blackjack
             }
         }
 
-        public void PlayMultiple(int MaxNum)
+        protected void InteractiveWager()
         {
-            while (GameNum < MaxNum)
+            for (int x = 0; x < players.Count; x++)
+            {
+                Player player = (Player)players[x];
+                player.InteractiveWager();
+                Console.WriteLine();
+            }
+        }
+
+        protected void InteractiveEvaluate()
+        {
+            for (int x = 0; x < players.Count; x++)
+            {
+                Player player = (Player)players[x];
+                player.EvalInteractive();
+            }
+        }
+
+        protected bool InteractivePlay()
+        {
+            bool playAgain = true;
+            for (int x = 0; x < players.Count; x++)
+            {
+                Player player = (Player)players[x];
+                playAgain = player.PlayInteractive();
+            }
+            dealer.Play();
+            return playAgain;
+        }
+
+        protected void InteractiveStats()
+        {
+            for (int x = 0; x < players.Count; x++)
+            {
+                Player player = (Player)players[x];
+                player.stats.total.PrintResults();
+            }
+        }
+
+        public void PlayInteractive()
+        {
+            bool playAgain = true;
+            GameNum = 0;
+            deck.Shuffle();
+            while (playAgain && deck.getRemainingCards() > players.Count * 5 && GameNum < strat.NumGames)
+            {
+                Console.Clear();
+                Console.WriteLine("===============================================");
+                Console.WriteLine("Game #{0} - Count is {1}", GameNum, deck.Count);
+                Console.WriteLine("===============================================");
+
+                InteractiveWager();
+                Deal();
+                playAgain = InteractivePlay();
+                if (playAgain)
+                {
+                    InteractiveEvaluate();
+                    GameNum++;
+                }
+                else
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Final Statistics");
+                    InteractiveStats();
+                }
+
+            }
+        }
+
+        public void PlayMultiple()
+        {
+            GameNum = 0;
+            while (GameNum < strat.NumGames)
             {
                 deck.Shuffle();
-                while (deck.getRemainingCards() > players.Count*5 && GameNum < MaxNum)
+                while (deck.getRemainingCards() > players.Count*5 && GameNum < strat.NumGames)
                 {
-                    CountStats[500 + deck.Count]++;
-
-                    if (deck.Count >= 10)
-                    {
-                        SetDebugLevel(2);
-                    }
-                    else
-                    {
-                        SetDebugLevel(0);
-                    }
-
-                    if (DebugLevel==2)
+                    if (strat.DebugLevel==2)
                     {
                         Console.WriteLine("===============================================");
                         Console.WriteLine("Game #{0} - Count is {1}", GameNum, deck.Count);
@@ -126,7 +177,7 @@ namespace personal.blackjack
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Exception - {0}", ex.Message);
+                        Debug.WriteLine("Exception - {0}", ex.Message);
                     }
                     GameNum++;
                 }
@@ -142,27 +193,14 @@ namespace personal.blackjack
                 Player player = (Player)players[x];
                 player.PrintResults();
             }
-
-            Console.WriteLine("Count Stats");
-            for (int x=0; x<1000; x++)
-            {
-                if (CountStats[x] > 0)
-                {
-                    double percCount = (double)CountStats[x] / GameNum * 100;
-                    if (percCount > 1)
-                    {
-                        Console.WriteLine("Count={0} Occ:{1} Perc:{2:0.#}%", x - 500, CountStats[x], percCount);
-                    }
-                }
-            }
-            CountStats[500 + deck.Count]++;
         }
+
 
         public ArrayList players;
         public Dealer dealer;
+        Strategy strat;
         Deck deck;
-        public int DebugLevel { get; set; }
+
         int GameNum = 0;
-        int[] CountStats = new int[1000];
     }
 }

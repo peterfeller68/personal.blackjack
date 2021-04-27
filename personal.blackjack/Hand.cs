@@ -9,6 +9,7 @@ namespace personal.blackjack
         public Hand()
         {
             myCards = new ArrayList();
+            Clear();
         }
 
         public void putCard(Card c)
@@ -24,6 +25,8 @@ namespace personal.blackjack
         public void Clear()
         {
             myCards.Clear();
+
+            doubleDown = false;
         }
 
         public int getNumAces()
@@ -132,10 +135,71 @@ namespace personal.blackjack
             return true;
         }
 
-        public void Print(bool bLong = false, string Title="")
+        public bool isBust()
+        {
+            return getValue() > 21;
+        }
+
+        public bool possibleSplit()
+        {
+            if (myCards.Count != 2) return false;
+
+            Card c1 = (Card)myCards[0];
+            Card c2 = (Card)myCards[1];
+            return c1.Value() == c2.Value();
+        }
+
+        public bool canSplit()
+        {
+            if (possibleSplit() == false) return false;
+
+            Card c1 = (Card)myCards[0];
+            // always split aces or eights
+            if (c1.type == CardType.Ace || c1.type == CardType.Eight)
+            {
+                return true;
+            }
+
+            // never split fours or fives
+            if (c1.type == CardType.Four || c1.type == CardType.Five)
+            {
+                return false;
+            }
+
+            return false;
+        }
+
+        public bool canDoubleDown(Card dealerVisCard)
+        {
+            if (myCards.Count == 2 && getValue() == 11)
+                return true;
+            if (dealerVisCard.type != CardType.Ace && dealerVisCard.Value() < 7)
+            {
+                // dealer shows low card nad hand is soft 16, 17, 18
+                if (getNumAces() == 1 && getValue() >= 16 && getValue() <= 18)
+                    return true;
+                if (getNumAces() == 0 && getValue() >= 9 && getValue() <= 10)
+                    return true;
+            }
+            return false;
+        }
+
+        public Card getCard(int index)
+        {
+            return (Card)myCards[index];
+        }
+
+        public void Print(bool bLong = false, string Title="", Card vc=null, string HandNr = "")
         {
             int Cnt = 0;
-            if (Title != "") Console.Write("{0} - ", Title);
+            if (Title != "")
+            {
+                if (HandNr !="")
+                {
+                    HandNr = string.Format("[{0}] ", HandNr);
+                }
+                Console.Write("{0} {1}- ", Title, HandNr);
+            }
             Console.Write("[");
             foreach (Card c in myCards)
             {
@@ -146,19 +210,17 @@ namespace personal.blackjack
                 else
                 {
                     if (Cnt > 0) Console.Write(" ");
-                    Console.Write("{0}", c.ToShortString());
+                    string strV = "";
+                    if(vc == c) strV = "*";
+                    Console.Write("{1}{0}", c.ToShortString(), strV);
                 }
                 Cnt++;
             }
             Console.Write("] - {0}", getValue());
-//            ArrayList aVal = getValues();
-
-//            for (int x=0; x<aVal.Count; x++)
-//                Console.Write("{0}, ", aVal[x]);
-//            Console.WriteLine();
             Console.WriteLine();
         }
 
         protected ArrayList myCards { get; }
+        public bool doubleDown { get; set; }
     }
 }

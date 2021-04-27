@@ -46,7 +46,6 @@ namespace personal.blackjack
             }
             throw new Exception("Unknown Card");
         }
-
         public int CountValue()
         {
             switch (type)
@@ -66,7 +65,6 @@ namespace personal.blackjack
             }
             return 0;
         }
-
         public override string ToString()
         {
             string suitStr = "Unk";
