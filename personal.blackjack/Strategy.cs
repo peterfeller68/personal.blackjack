@@ -11,7 +11,7 @@ namespace personal.blackjack
             PlayerHitLimit = new int[11];
 
             // global game settings
-            NumDecks = 5;
+            NumDecks = 1;
             NumPlayers = 1;
             NumGames = 100000;
             DebugLevel = 0;
@@ -23,6 +23,7 @@ namespace personal.blackjack
             // Player
             PlayerMinBet = 1;
             PlayerMaxBet = 100;
+            PlayerPurse = 1000;
 
             // hit until the value indicated based on the dealercard
             PlayerHitLimit[1] = 18;  /* Ace */
@@ -56,6 +57,7 @@ namespace personal.blackjack
         // Player Strategy
         public int PlayerMinBet { get; set; }
         public int PlayerMaxBet { get; set; }
+        public double PlayerPurse { get; set; }
         // set the player target based on the visible dealer card
         public int[] PlayerHitLimit { get; set; }
 

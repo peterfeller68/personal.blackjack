@@ -38,8 +38,11 @@ namespace personal.blackjack
                 for (int x = 0; x < players.Count; x++)
                 {
                     Player player = (Player)players[x];
-                    // the original deal is always to hand1
-                    player.DealCard(deck.getCard(), player.hand1);
+                    if (player.AllowedToPlay)
+                    {
+                        // the original deal is always to hand1
+                        player.DealCard(deck.getCard(), player.hand1);
+                    }
                 }
                 Card c = deck.getCard();
                 dealer.DealCard(c);
@@ -88,9 +91,21 @@ namespace personal.blackjack
             for (int x = 0; x < players.Count; x++)
             {
                 Player player = (Player)players[x];
-                player.InteractiveWager();
+                bool bPlayerPayed = player.InteractiveWager();
+                player.AllowedToPlay = bPlayerPayed;
                 Console.WriteLine();
             }
+        }
+
+        protected int NumPlayersPlaying()
+        {
+            int num = 0;
+            for (int x = 0; x < players.Count; x++)
+            {
+                Player player = (Player)players[x];
+                if (player.AllowedToPlay) num++;
+            }
+            return num;
         }
 
         protected void InteractiveEvaluate()
@@ -98,20 +113,24 @@ namespace personal.blackjack
             for (int x = 0; x < players.Count; x++)
             {
                 Player player = (Player)players[x];
-                player.EvalInteractive();
+                if (player.AllowedToPlay)
+                {
+                    player.EvalInteractive();
+                }
             }
         }
 
-        protected bool InteractivePlay()
+        protected void InteractivePlay()
         {
-            bool playAgain = true;
             for (int x = 0; x < players.Count; x++)
             {
                 Player player = (Player)players[x];
-                playAgain = player.PlayInteractive();
+                if (player.AllowedToPlay)
+                {
+                    player.PlayInteractive();
+                }
             }
             dealer.Play();
-            return playAgain;
         }
 
         protected void InteractiveStats()
@@ -125,32 +144,59 @@ namespace personal.blackjack
 
         public void PlayInteractive()
         {
-            bool playAgain = true;
             GameNum = 0;
             deck.Shuffle();
-            while (playAgain && deck.getRemainingCards() > players.Count * 5 && GameNum < strat.NumGames)
+            bool bNewShuffle = true;
+            while (true)
             {
+                int cardsInDeck = deck.getRemainingCards();
+                if (cardsInDeck <= (1+NumPlayersPlaying()) * 5)
+                {
+                    deck.Shuffle();
+                    bNewShuffle = true;
+                }
+
+                if (GameNum > 0)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Play again? [Y/N]");
+                    ConsoleKeyInfo key = Console.ReadKey();
+                    if (key.KeyChar == 'n' || key.KeyChar == 'N') break;
+                }
                 Console.Clear();
                 Console.WriteLine("===============================================");
-                Console.WriteLine("Game #{0} - Count is {1}", GameNum, deck.Count);
+                Console.WriteLine("Game #{0}", GameNum);
+                if (bNewShuffle) Console.WriteLine("FULL DECK");
                 Console.WriteLine("===============================================");
 
                 InteractiveWager();
-                Deal();
-                playAgain = InteractivePlay();
-                if (playAgain)
+                if (NumPlayersPlaying() > 0)
                 {
+                    Deal();
+                    bNewShuffle = false;
+
+                    if (dealer.hand.isBlackJack())
+                    {
+                        Console.WriteLine("Dealer has Blackjack");
+                    }
+                    else
+                    {
+                        InteractivePlay();
+                    }
                     InteractiveEvaluate();
                     GameNum++;
                 }
                 else
                 {
-                    Console.WriteLine();
-                    Console.WriteLine("Final Statistics");
-                    InteractiveStats();
+                    Console.WriteLine("There are no players");
                 }
 
             }
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("Final Statistics");
+            Console.WriteLine("----------------");
+            InteractiveStats();
         }
 
         public void PlayMultiple()
@@ -159,7 +205,7 @@ namespace personal.blackjack
             while (GameNum < strat.NumGames)
             {
                 deck.Shuffle();
-                while (deck.getRemainingCards() > players.Count*5 && GameNum < strat.NumGames)
+                while (deck.getRemainingCards() > (players.Count+1)*5 && GameNum < strat.NumGames)
                 {
                     if (strat.DebugLevel==2)
                     {

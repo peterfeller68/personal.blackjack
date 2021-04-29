@@ -74,6 +74,8 @@ namespace personal.blackjack
             , bool HasSplit
             , double gameWager)
         {
+            double winAmount = 0;
+
             if (!countStats.ContainsKey(DeckCount))
             {
                 countStats.Add(DeckCount, new StatisticsData(strat));
@@ -127,10 +129,7 @@ namespace personal.blackjack
                 dealercardstats.Lost++;
                 dealercardstats.TotDeckCountAtLoss += DeckCount;
 
-                total.Winnings -= gameWager;
-                countstats.Winnings -= gameWager;
-                dealercardstats.Winnings -= gameWager;
-
+                winAmount -= gameWager;
             }
             if (res.gameResult == Statistics.Result.Win)
             {
@@ -145,15 +144,11 @@ namespace personal.blackjack
 
                 if (res.blackJack)
                 {
-                    total.Winnings += gameWager * 1.5;
-                    countstats.Winnings += gameWager * 1.5;
-                    dealercardstats.Winnings += gameWager * 1.5;
+                    winAmount += gameWager*1.5;
                 }
                 else
                 {
-                    total.Winnings += gameWager;
-                    countstats.Winnings += gameWager;
-                    dealercardstats.Winnings += gameWager;
+                    winAmount += gameWager;
                 }
 
             }
@@ -163,6 +158,14 @@ namespace personal.blackjack
                 countstats.Push++;
                 dealercardstats.Push++;
             }
+
+            total.Winnings += winAmount;
+            countstats.Winnings += gameWager;
+            dealercardstats.Winnings += gameWager;
+
+            total.Purse += winAmount;
+            countstats.Purse += gameWager;
+            dealercardstats.Purse += gameWager;
 
             total.NumGames++;
             countstats.NumGames++;
@@ -192,6 +195,7 @@ namespace personal.blackjack
             Lost = 0;
             Split = 0;
             Winnings = 0;
+            Purse = strat.PlayerPurse;
         }
         public void PrintResults(bool bShort = false)
         {
@@ -241,6 +245,7 @@ namespace personal.blackjack
         public int Lost { get; set; }
         public int DoubleDown { get; set; }
         public double Winnings { get; set; }
+        public double Purse { get; set; }
 
         protected Strategy strat;
     }
